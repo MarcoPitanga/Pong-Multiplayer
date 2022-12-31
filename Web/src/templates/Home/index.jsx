@@ -1,9 +1,10 @@
+import { Pong } from '../../components/Pong'
 import './styles.css'
 
 export const Home = () => {
   return (
-    <>
-      <h1>Hello World!</h1>
-    </>
+    <div className="app">
+      <Pong />
+    </div>
   )
 }
