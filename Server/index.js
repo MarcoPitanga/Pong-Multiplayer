@@ -16,18 +16,27 @@ const game = {
 app.get("/", (req, res) => res.send("Hello World!"));
 
 io.on("connection", (socket) => {
-  console.log(`${socket.id} conectado!`);
-
   const name = "Player_" + socket.id.substr(0, 5);
   game.players[socket.id] = { name };
-
+  sendMessage(name, " Entrou");
   refreshPlayers();
 
   socket.on("disconnect", () => {
+    const player = game.players[socket.id];
     delete game.players[socket.id];
+    sendMessage(player.name, " Saiu");
     refreshPlayers();
   });
+
+  socket.on("sendMessage", (message) => {
+    const player = game.players[socket.id];
+    sendMessage(player.name, `: ${message}`);
+  });
 });
+
+const sendMessage = (player, message) => {
+  io.emit("receiveMessage", `${player}${message}`);
+};
 
 const refreshPlayers = () => {
   io.emit("playerRefresh", game.players);
