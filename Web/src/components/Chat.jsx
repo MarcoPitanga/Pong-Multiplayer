@@ -5,7 +5,7 @@ export const Chat = ({ sendMessage, messages }) => {
 
   return (
     <div style={{ flex: 1, textAlign: 'center' }}>
-      <div style={{ whiteSpace: 'pre-wrap' }}>{messages}</div>
+      <div style={{ whiteSpace: 'pre-wrap' }}>{messages.join('\n\n')}</div>
       <input type="text" value={messageToSend} onChange={(e) => setMessageToSend(e.target.value)} />
       <button onClick={() => sendMessage(messageToSend)}>Enviar</button>
     </div>

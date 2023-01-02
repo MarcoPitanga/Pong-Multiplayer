@@ -1,10 +1,11 @@
 import { Pong } from '../../components/Pong'
+import { GameProvider } from '../../contexts/GameContext'
 import './styles.css'
 
 export const Home = () => {
   return (
-    <div className="app">
+    <GameProvider>
       <Pong />
-    </div>
+    </GameProvider>
   )
 }
