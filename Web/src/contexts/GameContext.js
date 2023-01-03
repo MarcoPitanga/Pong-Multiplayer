@@ -16,13 +16,26 @@ const reducer = (state, action) => {
         ...state,
         isConnected: action.payload
       }
-
+    case 'PLAYER':
+      return {
+        ...state,
+        player: action.payload
+      }
     case 'PLAYERS':
       return {
         ...state,
         players: action.payload
       }
-
+    case 'ROOM':
+      return {
+        ...state,
+        room: state.rooms[state.players[action.payload].room]
+      }
+    case 'ROOMS':
+      return {
+        ...state,
+        rooms: action.payload
+      }
     case 'ADD_MESSAGE':
       return {
         ...state,
@@ -36,6 +49,9 @@ const reducer = (state, action) => {
 
 const initialState = {
   isConnected: false,
+  player: {},
+  room: {},
+  rooms: {},
   players: {},
   messages: []
 }
@@ -52,9 +68,14 @@ export const GameProvider = ({ children }) => {
     })
     socket.on('playerRefresh', (players) => {
       dispatch({ type: 'PLAYERS', payload: players })
+      dispatch({ type: 'PLAYER', payload: players[socket.id] })
     })
     socket.on('receiveMessage', (receivedMessage) => {
       dispatch({ type: 'ADD_MESSAGE', payload: receivedMessage })
+    })
+    socket.on('roomsRefresh', (rooms) => {
+      dispatch({ type: 'ROOMS', payload: rooms })
+      dispatch({ type: 'ROOM', payload: socket.id })
     })
     socket.open()
   }, [])
@@ -64,4 +85,12 @@ export const GameProvider = ({ children }) => {
 
 export const sendMessage = (message) => {
   socket.emit('sendMessage', message)
+}
+
+export const createRoom = () => {
+  socket.emit('createRoom')
+}
+
+export const leaveRoom = () => {
+  socket.emit('leaveRoom')
 }
