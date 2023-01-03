@@ -94,3 +94,7 @@ export const createRoom = () => {
 export const leaveRoom = () => {
   socket.emit('leaveRoom')
 }
+
+export const joinRoom = (roomId) => {
+  socket.emit('joinRoom', roomId)
+}

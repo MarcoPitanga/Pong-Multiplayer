@@ -2,6 +2,7 @@ const port = 4000;
 const express = require("express");
 const app = express();
 const http = require("http");
+const { Socket } = require("socket.io");
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
@@ -23,14 +24,16 @@ io.on("connection", (socket) => {
   sendMessage(game.players[socket.id].name, " Entrou");
 
   refreshPlayers();
+  refreshRooms();
 
   socket.on("disconnect", () => {
-    const player = game.players[socket.id];
+    sendMessage(game.players[socket.id].name, " Saiu");
+    leaveRoom(socket);
+
     delete game.players[socket.id];
 
-    sendMessage(player.name, " Saiu");
-
     refreshPlayers();
+    refreshRooms();
   });
 
   socket.on("sendMessage", (message) => {
@@ -56,12 +59,36 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leaveRoom", () => {
-    const roomId = game.players[socket.id].room;
-    const room = game.rooms[roomId];
+    leaveRoom(socket);
 
-    game.players[socket.id].room = undefined;
+    refreshPlayers();
+    refreshRooms();
+  });
 
-    if (socket.id == room.player1) {
+  socket.on("joinRoom", (roomId) => {
+    socket.join(roomId);
+
+    const position = game.rooms[roomId].player1 ? "2" : "1";
+
+    game.rooms[roomId][`player${position}`] = socket.id;
+    game.players[socket.id].room = roomId;
+
+    refreshPlayers();
+    refreshRooms();
+
+    sendMessage(game.players[socket.id].name, " Entrou em uma sala");
+  });
+});
+
+const leaveRoom = (socket) => {
+  const socketId = socket.id;
+  const roomId = game.players[socketId].room;
+  const room = game.rooms[roomId];
+
+  if (room) {
+    socket.leave(roomId);
+
+    if (socketId == room.player1) {
       room.player1 = undefined;
     } else {
       room.player2 = undefined;
@@ -70,11 +97,8 @@ io.on("connection", (socket) => {
     if (!room.player1 && !room.player2) {
       delete game.rooms[roomId];
     }
-
-    refreshPlayers();
-    refreshRooms();
-  });
-});
+  }
+};
 
 const sendMessage = (player, message) => {
   io.emit("receiveMessage", `${player}${message}`);
