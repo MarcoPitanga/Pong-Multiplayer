@@ -36,6 +36,11 @@ const reducer = (state, action) => {
         ...state,
         rooms: action.payload
       }
+    case 'MATCH':
+      return {
+        ...state,
+        match: action.payload
+      }
     case 'ADD_MESSAGE':
       return {
         ...state,
@@ -53,7 +58,8 @@ const initialState = {
   room: {},
   rooms: {},
   players: {},
-  messages: []
+  messages: [],
+  match: {}
 }
 
 export const GameProvider = ({ children }) => {
@@ -76,6 +82,9 @@ export const GameProvider = ({ children }) => {
     socket.on('roomsRefresh', (rooms) => {
       dispatch({ type: 'ROOMS', payload: rooms })
       dispatch({ type: 'ROOM', payload: socket.id })
+    })
+    socket.on('matchRefresh', (match) => {
+      dispatch({ type: 'MATCH', payload: match })
     })
     socket.open()
   }, [])

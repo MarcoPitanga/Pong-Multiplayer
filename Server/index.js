@@ -13,6 +13,7 @@ const io = require("socket.io")(server, {
 const game = {
   players: {},
   rooms: {},
+  match: {},
 };
 
 app.get("/", (req, res) => res.send("Hello World!"));
@@ -71,10 +72,22 @@ io.on("connection", (socket) => {
     const position = game.rooms[roomId].player1 ? "2" : "1";
 
     game.rooms[roomId][`player${position}`] = socket.id;
+
     game.players[socket.id].room = roomId;
+
+    const room = game.rooms[roomId];
+
+    if (room.player1 && room.player2) {
+      game.match[roomId] = {
+        score1: 0,
+        score2: 0,
+        status: "START",
+      };
+    }
 
     refreshPlayers();
     refreshRooms();
+    refreshMatch(roomId);
 
     sendMessage(game.players[socket.id].name, " Entrou em uma sala");
   });
@@ -87,6 +100,8 @@ const leaveRoom = (socket) => {
 
   if (room) {
     socket.leave(roomId);
+
+    game.players[socketId].room = undefined;
 
     if (socketId == room.player1) {
       room.player1 = undefined;
@@ -110,6 +125,10 @@ const refreshPlayers = () => {
 
 const refreshRooms = () => {
   io.emit("roomsRefresh", game.rooms);
+};
+
+const refreshMatch = (roomId) => {
+  io.to(roomId).emit("matchRefresh", game.match[roomId]);
 };
 
 server.listen(port, () => {
