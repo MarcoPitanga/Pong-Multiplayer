@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
 import socketClient from 'socket.io-client'
 import { createContext, useEffect, useReducer } from 'react'
 
@@ -106,4 +104,8 @@ export const leaveRoom = () => {
 
 export const joinRoom = (roomId) => {
   socket.emit('joinRoom', roomId)
+}
+
+export const gameLoaded = () => {
+  socket.emit('gameLoaded')
 }

@@ -4,16 +4,16 @@ import { Chat } from './Chat'
 import { GameContext, sendMessage } from '../contexts/GameContext'
 import { Rooms } from './Rooms'
 import { Loading } from './Loading'
+import { Game } from './Game'
 
 export const Pong = () => {
   const { isConnected, players, messages, match } = useContext(GameContext)
-
   return (
-    <div className="p-8 bg-gray-900 text-white w-screen h-screen">
+    <div className="bg-gray-900 text-white w-screen h-screen">
       {!isConnected ? (
         <Loading />
       ) : match.status ? (
-        <div>jogo</div>
+        <Game />
       ) : (
         <div className="flex flex-row h-full">
           <div className="mr-5 bg-gray-800 p-2.5 shadow-md max-w-xs w-80">
