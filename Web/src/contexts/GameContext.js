@@ -109,3 +109,13 @@ export const joinRoom = (roomId) => {
 export const gameLoaded = () => {
   socket.emit('gameLoaded')
 }
+
+let lastType = undefined
+export const sendKey = (type, key) => {
+  if (lastType === type) {
+    return
+  }
+
+  lastType = type
+  socket.emit('sendKey', { type, key })
+}
