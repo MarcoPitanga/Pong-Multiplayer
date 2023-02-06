@@ -13,7 +13,9 @@ export const Pong = () => {
       {!isConnected ? (
         <Loading />
       ) : match.status ? (
-        <Game />
+        <div className="flex justify-center">
+          <Game />
+        </div>
       ) : (
         <div className="flex flex-row h-full">
           <div className="mr-5 bg-gray-800 p-2.5 shadow-md max-w-xs w-80">

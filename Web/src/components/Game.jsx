@@ -54,16 +54,13 @@ export const Game = () => {
         <text
           x={(gameConfig.width / 2 - 20).toString()}
           y="45"
-          style={{ direction: 'rtl', fill: 'rgba(255, 255, 255, 0.7)', fontSize: '50px' }}
+          className="fill-[#ffffff]/[0.7] text-5xl"
+          direction="rtl"
         >
           {match.score1}
         </text>
 
-        <text
-          x={(gameConfig.width / 2 + 20).toString()}
-          y="45"
-          style={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: '50px' }}
-        >
+        <text x={(gameConfig.width / 2 + 20).toString()} y="45" className="fill-[#ffffff]/[0.7] text-5xl">
           {match.score2}
         </text>
 
