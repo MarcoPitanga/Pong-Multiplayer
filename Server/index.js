@@ -13,6 +13,7 @@ const io = require("socket.io")(server, {
 const gameConfig = {
   width: 580,
   height: 320,
+  maxScore: 10,
 };
 
 const game = {
@@ -127,15 +128,7 @@ io.on("connection", (socket) => {
 
     if (match.player1.ready && match.player2.ready) {
       match.status = "PLAY";
-      match.ball = {
-        width: 5,
-        xdirection: 1,
-        ydirection: 1,
-        xspeed: 2.8,
-        yspeed: 2.2,
-        x: gameConfig.width / 2,
-        y: gameConfig.height / 2,
-      };
+      restartMatch(match, roomId);
     }
   });
 
@@ -157,17 +150,23 @@ const leaveRoom = (socket) => {
   const socketId = socket.id;
   const roomId = game.players[socketId].room;
   const room = game.rooms[roomId];
+
   if (room) {
     const match = game.match[roomId];
 
     game.players[socketId].room = undefined;
 
     const playerNumber = "player" + (socketId === room.player1 ? 1 : 2);
+
     room[playerNumber] = undefined;
+
     if (match) {
       match[playerNumber] = undefined;
-      match.status = "END";
-      match.message = `O jogador ${game.players[socketId].name} desconectou.`;
+
+      if (match.status !== "END") {
+        match.status = "END";
+        match.message = `O jogador ${game.players[socketId].name} desconectou.`;
+      }
     }
 
     if (!room.player1 && !room.player2) {
@@ -176,9 +175,9 @@ const leaveRoom = (socket) => {
         delete game.match[roomId];
       }
     }
-
-    refreshMatch(roomId);
     socket.leave(roomId);
+    refreshMatch(roomId);
+    socket.emit("matchClear");
   }
 };
 
@@ -192,13 +191,13 @@ const gameInProgress = (roomId) => {
     case "PLAY":
       moveBall(match);
       movePaddle(match);
-      checkCollision(match);
+      checkCollision(match, roomId);
       break;
   }
 
   refreshMatch(roomId);
 
-  setTimeout(() => gameInProgress(roomId), 1000 / 60);
+  setTimeout(() => gameInProgress(roomId), 1000 / 30);
 };
 
 const moveBall = ({ ball }) => {
@@ -230,11 +229,17 @@ const movePaddle = (match) => {
   });
 };
 
-const checkCollision = (match) => {
+const checkCollision = (match, roomId) => {
   const { ball, gameConfig } = match;
 
-  if (ball.y > gameConfig.height - ball.width || ball.y < ball.width) {
-    ball.ydirection *= -1;
+  if (ball.y > gameConfig.height - ball.width) {
+    ball.y = gameConfig.height - ball.width * 2;
+    ball.ydirection = -1;
+  }
+
+  if (ball.y < ball.width) {
+    ball.y = ball.width * 2;
+    ball.ydirection = 1;
   }
 
   const { x: bx, y: by, width: br } = ball;
@@ -268,24 +273,77 @@ const checkCollision = (match) => {
       playerNumber === 1
         ? match[player].x + match[player].width + br
         : match[player].x - br;
+
+    const quarterTop = by < ry + rh / 4;
+    const quarterBottom = by > ry + rh - rh / 4;
+    const halfTop = by < ry + rh / 2;
+    const halfBottom = by > ry + rh - rh / 2;
+
+    if (quarterTop || quarterBottom) {
+      ball.yspeed += 0.15;
+      ball.xspeed -= 0.15;
+
+      ball.ydirection = quarterBottom ? 1 : -1;
+    } else if (halfTop || halfBottom) {
+      ball.yspeed += 0.05;
+      ball.xspeed -= 0.05;
+    }
+
+    ball.xspeed *= 1.1;
   } else if (ball.x < ball.width) {
     match.score2++;
-    restartMatch(match);
+    restartMatch(match, roomId);
   } else if (ball.x > gameConfig.width - ball.width) {
     match.score1++;
-    restartMatch(match);
+    restartMatch(match, roomId);
   }
 };
 
-const restartMatch = (match) => {
-  const { ball, gameConfig } = match;
-  ball.xdirection *= -1;
-  ball.x = gameConfig.width / 2;
-  ball.y = gameConfig.height / 2;
+const restartMatch = (match, roomId) => {
+  match.ball = {
+    ...match.ball,
+    width: 5,
+    xdirection: match.ball ? match.ball.xdirection * -1 : 1,
+    ydirection: 1,
+    xspeed: 5,
+    yspeed: 5 * (match.gameConfig.height / match.gameConfig.width),
+    x: match.gameConfig.width / 2,
+    y: match.gameConfig.height / 2,
+  };
+
+  game.rooms[roomId] = {
+    ...game.rooms[roomId],
+    score1: match.score1,
+    score2: match.score2,
+  };
+
+  if (
+    match.score1 === match.gameConfig.maxScore ||
+    match.score2 === match.gameConfig.maxScore
+  ) {
+    const playerNumber = match.score1 === match.gameConfig.maxScore ? 1 : 2;
+    const playerSocketId = game.rooms[roomId][`player${playerNumber}`];
+    const player = game.players[playerSocketId];
+
+    match.status = "END";
+    match.message = `O jogador ${
+      player ? player.name : playerSocketId
+    } venceu.`;
+    sendMessage(
+      undefined,
+      match.message + ` ${match.score1} x ${match.score2}`
+    );
+  }
+
+  refreshRooms();
 };
 
 const sendMessage = (player, message) => {
-  io.emit("receiveMessage", `${player}${message}`);
+  if (player) {
+    io.emit("receiveMessage", `${player}${message}`);
+  } else {
+    io.emit("receiveMessage", `${message}`);
+  }
 };
 
 const refreshPlayers = () => {
