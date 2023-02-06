@@ -84,6 +84,9 @@ export const GameProvider = ({ children }) => {
     socket.on('matchRefresh', (match) => {
       dispatch({ type: 'MATCH', payload: match })
     })
+    socket.on('matchClear', () => {
+      dispatch({ type: 'MATCH', payload: {} })
+    })
     socket.open()
   }, [])
 

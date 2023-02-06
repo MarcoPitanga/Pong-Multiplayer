@@ -14,12 +14,19 @@ export const Rooms = () => {
           <div className="max-h-full ">
             {Object.keys(rooms).map((key) => (
               <div key={`room_${key}`} className="flex text-lg font-semibold m-2 justify-between">
-                {rooms[key].name}{' '}
-                <Button
-                  text="Entrar"
-                  onClick={() => joinRoom(key)}
-                  disabled={rooms[key].player1 && rooms[key].player2}
-                />
+                {rooms[key].name}
+
+                {rooms[key].score1 === undefined ? (
+                  <Button
+                    text="Entrar"
+                    onClick={() => joinRoom(key)}
+                    disabled={rooms[key].player1 && rooms[key].player2}
+                  />
+                ) : (
+                  <span>
+                    {rooms[key].score1} x {rooms[key].score2}
+                  </span>
+                )}
               </div>
             ))}
           </div>
