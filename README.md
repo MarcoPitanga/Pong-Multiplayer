@@ -16,7 +16,7 @@
     Tecnologias
   </a>
   |
-  <a href="#Licença" >
+  <a href="#Licenca" >
     Licença
   </a>
 </h4>
